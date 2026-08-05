@@ -1,29 +1,66 @@
-graph TD
-    subgraph "Input & UI Layer"
-        A[Video Source / Live Feed] --> B[PyWebView GUI]
-        B --> C[Manual ROI Calibration]
-    end
+## 🏗 System Architecture
 
-    subgraph "AI Inference Engine"
-        C --> D[Frame Pre-processing]
-        D --> E{IISc-AIM UVH-26 Model}
-        E -->|YOLOv11-S| F[Indian Vehicle Detection]
-        F --> G[Filtering: Cars, Bikes, Autos, Trucks]
-    end
+```mermaid
+flowchart TD
 
-    subgraph "Decision Logic"
-        G --> H[Observation Window: 10s Avg]
-        H --> I[Flow-Ratio Calculation]
-        I --> J[Adaptive Green-Time Optimization]
-    end
+%% =========================
+%% INPUT LAYER
+%% =========================
+subgraph INPUT[" Input Layer"]
+    A[Traffic Video / Live Camera]
+    B[PyWebView Desktop GUI]
+    C[Manual ROI Selection]
+    A --> B
+    B --> C
+end
 
-    subgraph "Output & Analytics"
-        J --> K[Signal State Update: G/Y/R]
-        K --> L[Real-time Metrics Dashboard]
-        L --> M[Export to traffic_results.csv]
-        M --> N[Matplotlib Visual Analytics]
-    end
+%% =========================
+%% AI ENGINE
+%% =========================
+subgraph AI[" AI Inference Engine"]
+    D[Frame Preprocessing]
+    E["YOLOv11-S (IISc-AIM UVH-26)"]
+    F[Vehicle Detection]
+    G[Vehicle Classification]
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+end
 
-    style E fill:#f9f,stroke:#333,stroke-width:2px
-    style J fill:#bbf,stroke:#333,stroke-width:2px
-    style K fill:#dfd,stroke:#333,stroke-width:2px
+%% =========================
+%% CONTROL ENGINE
+%% =========================
+subgraph CONTROL[" Adaptive Signal Controller"]
+    H[10-Second Observation Window]
+    I[Traffic Density Estimation]
+    J[Flow Ratio Calculation]
+    K[Adaptive Green Time Computation]
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+end
+
+%% =========================
+%% OUTPUT
+%% =========================
+subgraph OUTPUT[" Output & Analytics"]
+    L[Traffic Signal Update]
+    M[Live Dashboard]
+    N[CSV Performance Logging]
+    O[Performance Visualization]
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+end
+
+%% =========================
+%% STYLING
+%% =========================
+
+style E fill:#E8F0FE,stroke:#1A73E8,stroke-width:2px
+style K fill:#FFF4E5,stroke:#FB8C00,stroke-width:2px
+style L fill:#E8F5E9,stroke:#43A047,stroke-width:2px
+```
