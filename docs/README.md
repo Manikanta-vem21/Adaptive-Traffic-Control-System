@@ -1,4 +1,4 @@
-##  System Architecture
+## 🏗 System Architecture
 
 ```mermaid
 flowchart TD
@@ -43,26 +43,23 @@ subgraph CONTROL[" Adaptive Signal Controller"]
 end
 
 %% =========================
-    %% OUTPUT
-    %% =========================
-    subgraph OUTPUT["Output & Analytics"]
-        L[Traffic Signal Update]
-        M[CSV Performance Logging]
-        N[Performance Visualization]
-        
-        %% Internal flow
-        L --> M
-        M --> N
-    end
-
-    %% Connections to external nodes
+%% OUTPUT
+%% =========================
+subgraph OUTPUT[" Output & Analytics"]
+    L[Traffic Signal Update]
+    N[CSV Performance Logging]
+    O[Performance Visualization]
     K --> L
-    N --> O[Final Report]
+    L --> N
+    N --> O
+    
+end
 
-    %% =========================
-    %% STYLING
-    %% =========================
-    style E fill:#E8F0FE,stroke:#1A73E8,stroke-width:2px
-    style K fill:#FFF4E5,stroke:#FB8C00,stroke-width:2px
-    style L fill:#E8F5E9,stroke:#43A047,stroke-width:2px
-    ```
+%% =========================
+%% STYLING
+%% =========================
+
+style E fill:#E8F0FE,stroke:#1A73E8,stroke-width:2px
+style K fill:#FFF4E5,stroke:#FB8C00,stroke-width:2px
+style L fill:#E8F5E9,stroke:#43A047,stroke-width:2px
+```
