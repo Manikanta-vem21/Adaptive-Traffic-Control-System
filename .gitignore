@@ -1,0 +1,3 @@
+*.pt
+__pycache__/
+traffic_results.csv

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Adaptive Traffic Signal</title>
+
+<style>
+body {
+    background:#111;
+    color:white;
+    text-align:center;
+    font-family:Arial;
+}
+
+.container {
+    display:flex;
+    justify-content:space-around;
+    margin-top:20px;
+}
+
+.video-box {
+    position: relative;
+}
+
+canvas {
+    width:800px;
+    height:450px;
+    border:1px solid #888;
+    border-radius:8px;
+    cursor:crosshair;
+}
+
+.light {
+    width:80px;
+    height:80px;
+    margin:10px auto;
+    border-radius:50%;
+    background:#333;
+}
+
+.red { background:red; }
+.green { background:green; }
+.yellow { background:yellow; }
+
+button {
+    padding:10px 20px;
+    margin:10px;
+    font-size:15px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>AI Adaptive Traffic Signal with Manual ROI Calibration</h2>
+
+<button onclick="uploadVideo()">Upload Video</button>
+<button onclick="startDetection()">Start Detection</button>
+
+<p id="selectedFile">No video selected</p>
+<p><b>Instruction:</b> Draw ROI on first frame before starting</p>
+
+<div class="container">
+
+<div class="video-box">
+    <canvas id="videoCanvas" width="800" height="450"></canvas>
+</div>
+
+<div>
+    <div id="red" class="light"></div>
+    <div id="yellow" class="light"></div>
+    <div id="green" class="light"></div>
+
+    <p>Vehicle Count: <span id="count">0</span></p>
+    <p>State: <span id="signal">-</span></p>
+    <p>Timer: <span id="timer">0</span></p>
+</div>
+
+</div>
+
+<script>
+let videoPath = null;
+
+const canvas = document.getElementById("videoCanvas");
+const ctx = canvas.getContext("2d");
+
+let drawing = false;
+let startX, startY;
+let roi = null;
+let currentFrame = new Image();
+
+/* =========================
+   VIDEO SELECTION
+========================= */
+async function uploadVideo() {
+    videoPath = await window.pywebview.api.select_video();
+    if (videoPath) {
+        document.getElementById("selectedFile").innerText = videoPath;
+        window.pywebview.api.show_first_frame(videoPath);
+    }
+}
+
+/* =========================
+   START DETECTION
+========================= */
+function startDetection() {
+    if (!videoPath) {
+        alert("Upload video first");
+        return;
+    }
+    if (!roi) {
+        alert("Draw ROI before starting");
+        return;
+    }
+    window.pywebview.api.start(videoPath);
+}
+
+/* =========================
+   ROI DRAWING
+========================= */
+canvas.addEventListener("mousedown", e => {
+    drawing = true;
+    startX = e.offsetX;
+    startY = e.offsetY;
+});
+
+canvas.addEventListener("mousemove", e => {
+    if (!drawing) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(currentFrame, 0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(
+        startX,
+        startY,
+        e.offsetX - startX,
+        e.offsetY - startY
+    );
+});
+
+canvas.addEventListener("mouseup", e => {
+    drawing = false;
+    roi = {
+        x1: startX,
+        y1: startY,
+        x2: e.offsetX,
+        y2: e.offsetY
+    };
+    window.pywebview.api.set_roi(roi);
+});
+
+/* =========================
+   FRAME UPDATE
+========================= */
+function updateFrame(frame) {
+    currentFrame.src = "data:image/jpeg;base64," + frame;
+    currentFrame.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(currentFrame, 0, 0, canvas.width, canvas.height);
+
+        if (roi) {
+            ctx.strokeStyle = "yellow";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(
+                roi.x1, roi.y1,
+                roi.x2 - roi.x1,
+                roi.y2 - roi.y1
+            );
+        }
+    };
+}
+
+/* =========================
+   METRICS UPDATE
+========================= */
+function updateMetrics(count, signal, timer) {
+
+    document.getElementById("count").innerText = count;
+    document.getElementById("signal").innerText = signal;
+    document.getElementById("timer").innerText = timer;
+
+    document.getElementById("red").className = "light";
+    document.getElementById("yellow").className = "light";
+    document.getElementById("green").className = "light";
+
+    if (signal === "GREEN")
+        document.getElementById("green").className = "light green";
+    else if (signal === "YELLOW" || signal === "OBSERVING")
+        document.getElementById("yellow").className = "light yellow";
+    else if (signal === "RED")
+        document.getElementById("red").className = "light red";
+}
+</script>
+
+</body>
+</html>
